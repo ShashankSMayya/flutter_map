@@ -106,6 +106,9 @@ class RichAttributionWidget extends StatefulWidget {
   /// [LogoSourceAttribution].
   final Duration popupInitialDisplayDuration;
 
+  /// Callback for when the popup box is expanded or collapsed that can be used to know the current state of the popup box.
+  final ValueChanged<bool>? onPopupExpanded;
+
   /// A prebuilt dynamic attribution layer that supports both logos and text
   /// through [SourceAttribution]s
   ///
@@ -144,6 +147,7 @@ class RichAttributionWidget extends StatefulWidget {
     this.showFlutterMapAttribution = true,
     this.animationConfig = const FadeRAWA(),
     this.popupInitialDisplayDuration = Duration.zero,
+    this.onPopupExpanded,
   });
 
   @override
@@ -169,6 +173,7 @@ class RichAttributionWidgetState extends State<RichAttributionWidget> {
         () {
           if (mounted) {
             setState(() => popupExpanded = false);
+            widget.onPopupExpanded?.call(false);
           }
         },
       );
@@ -230,7 +235,10 @@ class RichAttributionWidgetState extends State<RichAttributionWidget> {
                       ),
                     ))(
                 context,
-                () => setState(() => popupExpanded = false),
+                () {
+                  setState(() => popupExpanded = false);
+                  widget.onPopupExpanded?.call(false);
+                },
               )
             : (widget.openButton ??
                 (context, open) => IconButton(
@@ -244,10 +252,14 @@ class RichAttributionWidgetState extends State<RichAttributionWidget> {
                     ))(
                 context,
                 () {
-                  setState(() => popupExpanded = true);
+                  setState(() {
+                    popupExpanded = true;
+                    widget.onPopupExpanded?.call(true);
+                  });
                   mapEventSubscription =
                       MapController.of(context).mapEventStream.listen((e) {
                     setState(() => popupExpanded = false);
+                    widget.onPopupExpanded?.call(false);
                     mapEventSubscription?.cancel();
                   });
                 },
